@@ -1,12 +1,13 @@
 # Manage WSL (Ubuntu 22.04) with Ansible
 
-## WSL Ansible Steps
+If starting from scratch Download Ubuntu-22.04 from Microsoft Store
 
-1. Download Ubuntu-22.04 - Powershell
-
+- [Ubuntu 22.04](https://apps.microsoft.com/detail/9pn20msr04dw?hl=en-us&gl=US&ocid=pdpshare)
 - Create user and password
 
-2. Export to Create Base WSL - Powershell
+## WSL Ansible Steps
+
+1. Export to Create Base WSL - Powershell
 
 ```powershell
 $NEW_NAME="Base-Ubuntu-22.04"
@@ -16,7 +17,7 @@ wsl --import $NEW_NAME C:\Users\$env:USERNAME\wsl\$NEW_NAME C:\Users\$env:USERNA
 wsl --unregister Ubuntu-22.04
 ```
 
-3. Update Ubuntu-22.04, install ansible and run Ansible Playbook
+2. Update Ubuntu-22.04, install ansible and run Ansible Playbook
 
 ```powershell
 wsl -d $NEW_NAME
@@ -28,13 +29,13 @@ cd wsl-ansible/ansible
 ansible-playbook setup-wsl.yml -e default_user=USER_NAME
 ```
 
-4. Restart New WSl Instance with WLS Terminate
+3. Restart New WSl Instance with WLS Terminate
 
 ```powershell
 wsl --terminate $NEW_NAME
 ```
 
-5. Test My-Ubuntu-22.04 - Powershell
+4. Test My-Ubuntu-22.04 - Powershell
 
 ```powershell
 wsl -d $NEW_NAME
@@ -43,7 +44,7 @@ python3
 aws --version
 ```
 
-6. Symlink SSH from Windows to WSL (Optional)
+5. Symlink SSH from Windows to WSL (Optional)
 
 ```bash
 ln -s /mnt/c/User/USER_NAME/.ssh ~/.ssh
