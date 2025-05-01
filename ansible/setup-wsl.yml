@@ -1,0 +1,174 @@
+---
+- name: Configure Base-Ubuntu WSL instance
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Update apt repositories and install dependencies
+      ansible.builtin.apt:
+        update_cache: yes
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - software-properties-common
+      tags:
+        - repos
+
+    - name: Install additional packages using apt
+      ansible.builtin.apt:
+        name:
+          - bumpversion
+          - curl
+          - htop
+          - iotop
+          - python3-dev
+          - python3-pip
+          - python3-venv
+          - supervisor
+          - traceroute
+          - tree
+          - unzip
+          - zip
+      tags:
+        - apt_packages
+
+    - name: Install required python packages via pip
+      ansible.builtin.pip:
+        name:
+          - boto3
+          - gitpython
+          - python-dotenv
+          - pyVim
+          - pyVmomi
+          - requests
+      tags:
+        - pip_packages
+
+    - name: Install Docker CE (Community Edition)
+      block:
+        - name: Add Docker's official GPG key
+          ansible.builtin.apt_key:
+            url: https://download.docker.com/linux/ubuntu/gpg
+            state: present
+
+        - name: Set up the Docker repository
+          ansible.builtin.apt_repository:
+            repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+            state: present
+
+        - name: Install Docker CE
+          ansible.builtin.apt:
+            name: docker-ce
+            state: present
+      tags:
+        - docker
+
+    - name: Install Ansible amazon.aws collection
+      ansible.builtin.command:
+        cmd: ansible-galaxy collection install amazon.aws
+      tags:
+        - ansible_collections
+
+    # AWS CLI v2 Installation
+    - name: Download AWS CLI v2 installer
+      ansible.builtin.get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+      tags:
+        - aws_cli
+
+    - name: Unzip AWS CLI v2 installer
+      ansible.builtin.unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp/
+        remote_src: yes
+      tags:
+        - aws_cli
+
+    - name: Install AWS CLI v2 to /usr/local/bin
+      ansible.builtin.command:
+        cmd: /tmp/aws/install --bin-dir /usr/local/bin
+      tags:
+        - aws_cli
+
+    - name: Verify AWS CLI installation
+      ansible.builtin.command:
+        cmd: aws --version
+      register: aws_version
+      tags:
+        - aws_cli
+
+    - name: Show AWS CLI version
+      ansible.builtin.debug:
+        msg: "AWS CLI version installed: {{ aws_version.stdout }}"
+      tags:
+        - aws_cli
+
+    # HashiCorp Packer Installation
+
+    - name: Download Packer 1.11.2
+      ansible.builtin.get_url:
+        url: https://releases.hashicorp.com/packer/1.11.2/packer_1.11.2_linux_amd64.zip
+        dest: /tmp/packer_1.11.2_linux_amd64.zip
+      tags:
+        - packer
+
+    - name: Unzip Packer binary
+      ansible.builtin.unarchive:
+        src: /tmp/packer_1.11.2_linux_amd64.zip
+        dest: /usr/local/bin/
+        remote_src: yes
+      tags:
+        - packer
+
+    - name: Ensure Packer binary is executable
+      ansible.builtin.file:
+        path: /usr/local/bin/packer
+        mode: "0755"
+      tags:
+        - packer
+
+    - name: Verify Packer installation
+      ansible.builtin.command:
+        cmd: packer --version
+      register: packer_version
+      tags:
+        - packer
+
+    - name: Show Packer version
+      ansible.builtin.debug:
+        msg: "Packer version installed: {{ packer_version.stdout }}"
+      tags:
+        - packer
+
+    # Customizations
+
+    - name: Update wsl.conf
+      ansible.builtin.template:
+        src: template/wsl.conf.j2
+        dest: /etc/wsl.conf
+      tags:
+        - wsl_conf
+
+    - name: Ensure global bash history settings are set in /etc/profile
+      ansible.builtin.blockinfile:
+        path: /etc/profile
+        block: |
+          export HISTSIZE=20000
+          export HISTFILESIZE=20000
+          export HISTTIMEFORMAT="%F %T "
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR BASH HISTORY SETTINGS"
+        backup: yes
+      tags:
+        - bash_history
+
+    - name: Ensure global bash history settings are set in /etc/bash.bashrc
+      ansible.builtin.blockinfile:
+        path: /etc/bash.bashrc
+        block: |
+          export HISTSIZE=20000
+          export HISTFILESIZE=20000
+          export HISTTIMEFORMAT="%F %T "
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR BASH HISTORY SETTINGS"
+        backup: yes
+      tags:
+        - bash_history

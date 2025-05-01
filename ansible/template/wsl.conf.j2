@@ -1,0 +1,12 @@
+[boot]
+systemd=true
+
+[user]
+default={{ default_user }}
+
+[network]
+hostname="{{ ansible_env['WSL_DISTRO_NAME'] }}"
+
+[automount]
+enable = true
+options = "metadata,unmask=22,fmask=0077"
